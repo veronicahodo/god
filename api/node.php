@@ -53,6 +53,12 @@ class NODE
 		$this->fields[$field] = $value;
 	}
 
+
+	function getAll()
+	{
+		return $this->fields;
+	}
+
 	function getParents(VCRUD $c)
 	{
 		$parents = $c->read('links', ['childId', '=', $this->fields['nodeId']]);
@@ -81,12 +87,24 @@ class NODE
 		$userId = $token->getUserIdFromToken(($_REQUEST['token'] ?? ''), $c);
 		if ($userId) {
 			$nodeId = htmlspecialchars($_REQUEST['nodeId'] ?? 0);
+			$node = $this->read(['nodeId', '=', $nodeId], $c);
+			if ($node['ownerId'] === $userId) {
+				return [
+					'status' => 'ok',
+					'node' => $node
+				];
+			} else {
+				return [
+					'status' => 'error',
+					'message' => 'User does not match, group support not enabled'
+				];
+			}
 		} else {
+			return [
+				'status' => 'error',
+				'message' => 'Token does not match a user'
+			];
 		}
 		$nodeId = htmlspecialchars($_REQUEST['nodeId'] ?? 0);
-		return [
-			'status' => 'ok',
-			'node' => $this->read(['nodeId', '=', $nodeId], $c)
-		];
 	}
 }
